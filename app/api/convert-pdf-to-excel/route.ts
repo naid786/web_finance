@@ -30,6 +30,6 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ success: false, message: 'Server error.' }, { status: 500 });
+    return NextResponse.json({ success: false, message: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
   }
 }

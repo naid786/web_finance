@@ -191,7 +191,7 @@ export async function convertPdfToExcelAction(formData: FormData): Promise<{ suc
     return {
       success: true,
       message: `Successfully extracted ${extractedData.transactions.length} transactions`,
-      // downloadUrl: dataUrl,
+      downloadUrl: dataUrl,
     };
 
   } catch (error) {

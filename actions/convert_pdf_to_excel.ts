@@ -1,7 +1,7 @@
 'use server';
 
 import * as XLSX from 'xlsx';
-import * as fs from 'fs';
+// ...existing code...
 import * as z from "zod";
 
 interface Transaction {
@@ -125,7 +125,7 @@ export async function convertTransactionsToExcel(
   transactions: Transaction[], 
   outputPath: string,
   headers?: string[]
-): Promise<any> {
+): Promise<Buffer> {
   try {
     // Create a new workbook
     const workbook = XLSX.utils.book_new();
@@ -156,14 +156,13 @@ const formSchema = z.object({
   bank: z.string(),
 });
 
-type FormData = z.input<typeof formSchema>;
+// ...existing code...
 export async function convertPdfToExcelAction(file: File): Promise<{ success: boolean; message: string; downloadUrl?: string }> {
   try {
     
     if (!file) {
       throw new Error('No PDF file provided');
     }
-
     if (file.type !== 'application/pdf') {
       throw new Error('File must be a PDF');
     }

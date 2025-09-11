@@ -32,12 +32,16 @@ export default function Home() {
 
     void (async () => {
       try {
-
-        // Create FormData object for server action
+        // Create FormData object for API endpoint
         const formData = new FormData();
         formData.append("pdf", pdf);
-        
-        const result = await convertPdfToExcelAction(formData);
+
+        const response = await fetch("/api/convert-pdf-to-excel", {
+          method: "POST",
+          body: formData,
+        });
+        const result = await response.json();
+
         // if success, download the file
         if (result.success && result.downloadUrl) {
           const link = document.createElement('a');

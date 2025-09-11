@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Web Finance
+
+ 
+A modern web application for financial document processing and management. This project is built using Next.js and TypeScript, with a focus on converting PDF files to Excel and providing a user-friendly interface for finance-related workflows.
+
+
+## Features
+
+- Convert PDF documents to Excel format
+- Clean and intuitive UI components
+- Modular code structure for easy maintenance
+- Example test data included
+
+
+## Project Structure
+
+- `actions/`: Server-side actions (e.g., PDF to Excel conversion)
+- `app/`: Next.js app directory (pages, layout, global styles)
+- `components/`: Reusable UI components
+- `lib/`: Utility functions
+- `public/`: Static assets (SVGs, icons)
+- `test/data/`: Sample PDF and text files for testing
+
 
 ## Getting Started
 
-First, run the development server:
+
+### Prerequisites
+
+- Node.js (v18 or higher recommended)
+- npm (v9 or higher)
+
+
+### Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone <your-repo-url>
+   cd web_finance
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+
+### Running Locally
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Building for Production
 
-## Learn More
+To build the app for production:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To start the production server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm start
+```
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+You can deploy this Next.js app to any platform that supports Node.js, such as Vercel, Netlify, or your own server.
+
+
+### Deploying to Vercel
+
+1. [Sign up for Vercel](https://vercel.com/signup) and install the Vercel CLI:
+
+   ```bash
+   npm i -g vercel
+   ```
+
+2. Run the deploy command:
+
+   ```bash
+   vercel
+   ```
+
+3. Follow the prompts to link your project and deploy.
+
+
+### Deploying to Other Platforms
+
+- Build the app using `npm run build`.
+- Serve the `.next` directory using Node.js or a compatible server.
+
+
+## Contributing
+
+Pull requests and issues are welcome! Please follow conventional commit messages and ensure code passes linting and tests.
+
+
+## License
+
+MIT

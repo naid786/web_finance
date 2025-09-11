@@ -54,10 +54,10 @@ export default function Home() {
   };
 
   return (
-    <Card className="container mx-auto p-4">
+    <Card className="container mx-auto p-4 w-full ">
       <h1 className="text-2xl font-bold mb-4">PDF to Excel Converter</h1>
-      <Form {...form} >
-        <form  className="space-y-4 " onSubmit={form.handleSubmit(onSubmit)}>
+      <Form {...form}  >
+        <form  className="space-y-4 w-full " onSubmit={form.handleSubmit(onSubmit)}>
           <FormField
             control={form.control}
             name="pdf"
@@ -66,11 +66,11 @@ export default function Home() {
               <FormItem>
                 <FormLabel>PDF File</FormLabel>
                 <FormControl>
-                  <div className="flex w-md">
+                  <div className="flex">
                     <Input
                       type="file"
                       accept="application/pdf,.pdf"
-                      className="mt-2  "
+                      className="mt-2 w-full "
                       name={field.name}
                       ref={field.ref}
                       onBlur={field.onBlur}

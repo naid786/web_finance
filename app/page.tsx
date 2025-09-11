@@ -17,16 +17,19 @@ const formSchema = z.object({
   bank: z.string(),
 });
 
-type FormData = z.input<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
 export default function Home() {
 
-  const form = useForm<FormData>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { bank: "" },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: FormValues) => {
+    // prevent default form submission
+    // No action needed: react-hook-form's handleSubmit already prevents default submission
+
     // want to extract the transactions from the pdf and convert to excel
     const { pdf } = data;
 
@@ -40,20 +43,20 @@ export default function Home() {
           method: "POST",
           body: formData,
         });
-        const result = await response.json();
 
-        // if success, download the file
-        if (result.success && result.downloadUrl) {
-          const link = document.createElement('a');
-          link.href = result.downloadUrl;
-          link.download = 'transactions.xlsx';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          throw new Error(result.message || 'Conversion failed');
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Conversion failed');
         }
-        console.log(result);
+
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = 'transactions.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
       } catch (err) {
         console.error(err);
         alert("Unable to extract transactions. Please try again.");
@@ -126,3 +129,5 @@ export default function Home() {
     </Card>
   );
 }
+
+

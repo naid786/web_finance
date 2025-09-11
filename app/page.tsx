@@ -32,7 +32,12 @@ export default function Home() {
 
     void (async () => {
       try {
-        const result = await convertPdfToExcelAction(pdf);
+
+        // Create FormData object for server action
+        const formData = new FormData();
+        formData.append("pdf", pdf);
+        
+        const result = await convertPdfToExcelAction(formData);
         // if success, download the file
         if (result.success && result.downloadUrl) {
           const link = document.createElement('a');

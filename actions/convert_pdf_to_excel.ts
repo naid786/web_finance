@@ -157,8 +157,11 @@ const formSchema = z.object({
 });
 
 // ...existing code...
-export async function convertPdfToExcelAction(file: File): Promise<{ success: boolean; message: string; downloadUrl?: string }> {
+export async function convertPdfToExcelAction(formData: FormData): Promise<{ success: boolean; message: string; downloadUrl?: string }> {
   try {
+    console.log("Starting PDF to Excel conversion action");
+    // Get the file from FormData
+    const file = formData.get('pdf') as File;
     
     if (!file) {
       throw new Error('No PDF file provided');
@@ -188,7 +191,7 @@ export async function convertPdfToExcelAction(file: File): Promise<{ success: bo
     return {
       success: true,
       message: `Successfully extracted ${extractedData.transactions.length} transactions`,
-      downloadUrl: dataUrl,
+      // downloadUrl: dataUrl,
     };
 
   } catch (error) {

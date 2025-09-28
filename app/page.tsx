@@ -58,6 +58,7 @@ export default function Home() {
         window.URL.revokeObjectURL(link.href);
       } catch (err) {
         console.error(err);
+        alert(err instanceof Error ? err.message : 'Unknown error occurred');
         alert("Unable to extract transactions. Please try again.");
       }
     })();

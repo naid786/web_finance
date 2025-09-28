@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ["pdf-parse", "xlsx"]
+  },
   reactStrictMode: true,
   images: {
     domains: [], // Add your image domains here if needed

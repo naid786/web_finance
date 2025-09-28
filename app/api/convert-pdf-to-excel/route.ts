@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Convert the uploaded file to Buffer
-    const pdfBuffer = Buffer.from(await (pdfFile as Blob).arrayBuffer());
+    const arrayBuffer = await (pdfFile as Blob).arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
 
     // Extract transactions from PDF
     const extractedData = await extractTransactionsFromPdfText(pdfBuffer);

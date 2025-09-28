@@ -15,8 +15,18 @@ export interface ExtractedData {
  */
 export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<ExtractedData> {
   try {
-    // Dynamic import to avoid bundling issues with Node.js modules
-    const pdfParse = (await import('pdf-parse')).default;
+    // Use require for server-side module
+    const pdfParse = require('pdf-parse');
+    
+    // Ensure we have a proper Buffer
+    if (!Buffer.isBuffer(pdfFile)) {
+      throw new Error(`Expected Buffer, received ${typeof pdfFile}`);
+    }
+    
+    if (pdfFile.length === 0) {
+      throw new Error('PDF Buffer is empty');
+    }
+    
     const pdfData = await pdfParse(pdfFile);
     
     const transactions: Transaction[] = [];

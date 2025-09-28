@@ -45,7 +45,7 @@ export async function convertPdfToExcelAction(formData: FormData): Promise<{ suc
     const outputPath = `/temp/transactions_${timestamp}.xlsx`;
     
     // Convert to Excel
-    const excelBuffer = await convertTransactionsToExcel(extractedData.transactions, outputPath, extractedData.headers);
+    const excelBuffer = await convertTransactionsToExcel(extractedData.transactions);
 
     // Return a data URL so the client can download without saving on the server
     const excelBase64 = Buffer.from(excelBuffer).toString('base64');
@@ -80,7 +80,7 @@ export async function convertPdfToExcel(pdfFile: Buffer | File, excelPath: strin
     }
     
     const extractedData = await extractTransactionsFromPdfText(pdfBuffer);
-    await convertTransactionsToExcel(extractedData.transactions, excelPath, extractedData.headers);
+    await convertTransactionsToExcel(extractedData.transactions);
   } catch (error) {
     throw new Error(`PDF to Excel conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }

@@ -17,12 +17,8 @@ export async function POST(req: NextRequest) {
     // Extract transactions from PDF
     const extractedData = await extractTransactionsFromPdfText(pdfBuffer);
     
-    // Generate unique filename for the output
-    const timestamp = Date.now();
-    const outputPath = `/temp/transactions_${timestamp}.xlsx`;
-    
     // Convert transactions to Excel format
-    const excelBuffer = await convertTransactionsToExcel(extractedData.transactions, outputPath, extractedData.headers);
+    const excelBuffer = await convertTransactionsToExcel(extractedData.transactions);
 
     // Return the Excel file as a response
     return new NextResponse(new Uint8Array(excelBuffer), {

@@ -27,10 +27,10 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
     console.log('Starting PDF extraction, buffer size:', pdfFile.length);
     
     // Import pdf-parse with better error handling
-    let pdfParse: any;
+    let pdfParse: ((buffer: Buffer) => Promise<{ text: string; numpages: number; info: unknown; metadata: unknown; version: string }>);
     try {
-      const module = await import('pdf-parse');
-      pdfParse = module.default || module;
+      const pdfParseModule = await import('pdf-parse');
+      pdfParse = pdfParseModule.default || pdfParseModule;
       
       if (typeof pdfParse !== 'function') {
         throw new Error('pdf-parse is not a function');
@@ -162,9 +162,8 @@ export function parseCapitecTransaction(block: string): Transaction | null {
  * Converts extracted transaction data to Excel format and saves it to a file.
  */
 export async function convertTransactionsToExcel(
-  transactions: Transaction[], 
-  outputPath: string,
-  headers?: string[]
+  transactions: Transaction[]
+  // outputPath and headers parameters removed as they're not used
 ): Promise<Buffer> {
   try {
     // Create a new workbook

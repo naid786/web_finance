@@ -1,22 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-// import any libraries needed for PDF parsing and Excel generation here
+import { extractTransactionsFromPdfText, convertTransactionsToExcel } from '@/lib/transactionUtils';
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const pdfFile = formData.get('pdf');
+    
     if (!pdfFile) {
       return NextResponse.json({ success: false, message: 'No PDF file uploaded.' }, { status: 400 });
     }
+
+    // Convert the uploaded file to Buffer
     const pdfBuffer = Buffer.from(await (pdfFile as Blob).arrayBuffer());
 
-    // TODO: Replace this with real PDF parsing and Excel generation
-    // For demonstration, just return the PDF buffer as an Excel file
-    // You can use libraries like exceljs to generate a real Excel file
+    // Extract transactions from PDF
+    const extractedData = await extractTransactionsFromPdfText(pdfBuffer);
+    
+    // Generate unique filename for the output
+    const timestamp = Date.now();
+    const outputPath = `/temp/transactions_${timestamp}.xlsx`;
+    
+    // Convert transactions to Excel format
+    const excelBuffer = await convertTransactionsToExcel(extractedData.transactions, outputPath, extractedData.headers);
 
-    return new NextResponse(pdfBuffer, {
+    // Return the Excel file as a response
+    return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -24,7 +32,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ success: false, message: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
+    console.error('PDF to Excel conversion error:', err);
+    return NextResponse.json({ 
+      success: false, 
+      message: err instanceof Error ? err.message : 'Unknown error occurred during conversion' 
+    }, { status: 500 });
   }
 }

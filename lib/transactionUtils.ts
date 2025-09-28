@@ -15,8 +15,8 @@ export interface ExtractedData {
  */
 export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<ExtractedData> {
   try {
-    // Use require for server-side module
-    const pdfParse = require('pdf-parse');
+    // Dynamic import for server-side module
+    const pdfParse = (await import('pdf-parse')).default;
     
     // Ensure we have a proper Buffer
     if (!Buffer.isBuffer(pdfFile)) {

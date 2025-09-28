@@ -15,10 +15,7 @@ export interface ExtractedData {
  */
 export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<ExtractedData> {
   try {
-    // Dynamic import for server-side module
-    const pdfParse = (await import('pdf-parse')).default;
-    
-    // Ensure we have a proper Buffer
+    // Ensure we have a proper Buffer before attempting to parse
     if (!Buffer.isBuffer(pdfFile)) {
       throw new Error(`Expected Buffer, received ${typeof pdfFile}`);
     }
@@ -26,8 +23,48 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
     if (pdfFile.length === 0) {
       throw new Error('PDF Buffer is empty');
     }
+
+    console.log('Starting PDF extraction, buffer size:', pdfFile.length);
     
-    const pdfData = await pdfParse(pdfFile);
+    // Import pdf-parse with better error handling
+    let pdfParse: any;
+    try {
+      const module = await import('pdf-parse');
+      pdfParse = module.default || module;
+      
+      if (typeof pdfParse !== 'function') {
+        throw new Error('pdf-parse is not a function');
+      }
+    } catch (importError) {
+      console.error('Import error:', importError);
+      throw new Error(`Failed to import pdf-parse: ${importError}`);
+    }
+
+    // Create a clean buffer copy to ensure no corruption
+    const cleanBuffer = Buffer.from(pdfFile);
+    
+    console.log('About to parse PDF...');
+    
+    // Call pdf-parse with the buffer and catch specific errors
+    let pdfData;
+    try {
+      pdfData = await pdfParse(cleanBuffer);
+    } catch (parseError) {
+      console.error('PDF Parse Error:', parseError);
+      
+      // Check if the error message contains file path references
+      if (parseError instanceof Error && parseError.message.includes('./test/data/')) {
+        throw new Error('PDF parsing library is incorrectly trying to access file system. This might be due to corrupted PDF data or library issue.');
+      }
+      
+      throw new Error(`PDF parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
+    }
+    
+    if (!pdfData || !pdfData.text) {
+      throw new Error('No text content extracted from PDF');
+    }
+    
+    console.log('PDF parsing successful, text length:', pdfData.text.length);
     
     const transactions: Transaction[] = [];
     const text = pdfData.text;

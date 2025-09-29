@@ -1,12 +1,126 @@
 import * as XLSX from 'xlsx';
+import { FormattedTextRow, render_page } from './pdfText';
 
 export interface Transaction {
   [key: string]: string | null;
 }
 
+interface MatrixResult {
+  rows: string[][];
+  cells: { text: string }[][];
+  columnCount: number;
+  rowCount: number;
+  columnBounds: { x: number; width: number }[];
+}
+
 export interface ExtractedData {
-  transactions: Transaction[];
+  excelBuffer: Buffer;
   headers?: string[];
+}
+
+// Helper function to convert formatted text rows to matrix structure
+function convertFormattedTextToMatrix(formattedRows: SimpleFormattedTextRow[]): MatrixResult {
+  const rows: string[][] = [];
+
+  formattedRows.forEach(row => {
+    // Split the text by significant spacing to create columns
+    const text = row.text || '';
+    const columns = text.split(/\s{3,}/).filter((col: string) => col.trim()); // Split on 3+ spaces
+    rows.push(columns);
+  });
+
+  // Find maximum number of columns
+  const maxColumns = Math.max(...rows.map(row => row.length), 1);
+
+  // Normalize all rows to have the same number of columns
+  const normalizedRows = rows.map(row => {
+    const normalizedRow = [...row];
+    while (normalizedRow.length < maxColumns) {
+      normalizedRow.push('');
+    }
+    return normalizedRow;
+  });
+
+  return {
+    rows: normalizedRows,
+    cells: normalizedRows.map(row => row.map(cell => ({ text: cell }))),
+    columnCount: maxColumns,
+    rowCount: normalizedRows.length,
+    columnBounds: Array.from({ length: maxColumns }, (_, i) => ({ x: i * 100, width: 100 }))
+  };
+}
+
+// Interface for formatted text row (simplified version)
+interface SimpleFormattedTextRow {
+  text: string;
+  x: number;
+  y: number;
+  items: { str: string; transform?: number[] }[];
+}
+
+// Helper function to create Excel workbook from matrix data
+function createExcelFromMatrix(textMatrix: MatrixResult | string[][]): XLSX.WorkBook {
+  const workbook = XLSX.utils.book_new();
+
+  // Create worksheet from the text matrix
+  let worksheet: XLSX.WorkSheet;
+
+  // Handle different matrix types
+  if (Array.isArray(textMatrix)) {
+    // Direct string[][] array
+    worksheet = XLSX.utils.aoa_to_sheet(textMatrix);
+  } else if ('rows' in textMatrix && Array.isArray(textMatrix.rows)) {
+    // MatrixResult or Text2DMatrix with rows property
+    worksheet = XLSX.utils.aoa_to_sheet(textMatrix.rows);
+  } else {
+    // Fallback to empty sheet
+    worksheet = XLSX.utils.aoa_to_sheet([['No data available']]);
+  }
+
+  // Apply basic formatting
+  const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+
+  // Auto-size columns based on content
+  const colWidths: { wch: number }[] = [];
+
+  let dataRows: string[][];
+  if (Array.isArray(textMatrix)) {
+    dataRows = textMatrix;
+  } else if ('rows' in textMatrix) {
+    dataRows = textMatrix.rows;
+  } else {
+    dataRows = [];
+  }
+
+  for (let col = range.s.c; col <= range.e.c; col++) {
+    let maxWidth = 10;
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+      const cell = worksheet[cellAddress];
+      if (cell && cell.v) {
+        const cellText = String(cell.v);
+        maxWidth = Math.max(maxWidth, cellText.length);
+      }
+    }
+    colWidths.push({ wch: Math.min(maxWidth + 2, 50) }); // Cap at 50 chars
+  }
+  worksheet['!cols'] = colWidths;
+
+  // Set first row as header if it exists
+  if (dataRows.length > 0) {
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (worksheet[cellAddress]) {
+        worksheet[cellAddress].s = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: 'EEEEEE' } }
+        };
+      }
+    }
+  }
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'PDF_Data');
+  return workbook;
 }
 
 /**
@@ -27,7 +141,7 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
     console.log('Starting PDF extraction, buffer size:', pdfFile.length);
     
     // Import pdf-parse with better error handling
-    let pdfParse: ((buffer: Buffer) => Promise<{ text: string; numpages: number; info: unknown; metadata: unknown; version: string }>);
+    let pdfParse: ((buffer: Buffer, options?: { [key: string]: unknown }) => Promise<{ text: string; numpages: number; info: unknown; metadata: unknown; version: string }>);
     try {
       const pdfParseModule = await import('pdf-parse');
       pdfParse = pdfParseModule.default || pdfParseModule;
@@ -47,8 +161,8 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
     
     // Call pdf-parse with the buffer and catch specific errors
     let pdfData;
-    try {
-      pdfData = await pdfParse(cleanBuffer);
+    try {      
+      pdfData = await pdfParse(cleanBuffer, { pagerender: render_page });
     } catch (parseError) {
       console.error('PDF Parse Error:', parseError);
       
@@ -64,35 +178,99 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
       throw new Error('No text content extracted from PDF');
     }
     
+
     console.log('PDF parsing successful, text length:', pdfData.text.length);
     
-    const transactions: Transaction[] = [];
-    const text = pdfData.text;
+    const data = pdfData.text.replace(/\n/g, '').trim();
     
-    // Split by date pattern to get individual transaction blocks
-    const transactionBlocks = text.split(/(?=(?:\n\d{2}\/\d{2}\/\d{4}[A-Za-z]|\n\d{4}-\d{2}-\d{2}[A-Za-z]))/)
-        .filter((block: string) => {
-            return block.trim().length > 0;
-        });
-  
-    for (const block of transactionBlocks) {
-      const transaction = parseCapitecTransaction(block.trim());
-      if (transaction) {
-        transactions.push(transaction);
+    // Handle concatenated JSON arrays from multiple pages
+    let text: FormattedTextRow[] = [];
+    let textMatrix: MatrixResult ;
+    let pagesProcessed = 0;
+
+    try {
+      // If the data contains multiple JSON arrays concatenated together,
+      // we need to split them and parse each one separately
+      if (data.startsWith('[') && data.includes('][')) {
+        // Split on '][' pattern and fix the brackets
+        const jsonParts = data.split('][');
+        for (let i = 0; i < jsonParts.length; i++) {
+          let part = jsonParts[i];
+          // Add missing brackets
+          if (i === 0) {
+            part = part + ']';
+          } else if (i === jsonParts.length - 1) {
+            part = '[' + part;
+          } else {
+            part = '[' + part + ']';
+          }
+          
+          try {
+            const pageData = JSON.parse(part) as FormattedTextRow[];
+            text.push(...pageData);
+          } catch (partError) {
+            console.warn('Failed to parse part of JSON data:', part.substring(0, 100), partError);
+          }
+        }
+      } else {
+        // Single JSON array
+        text = JSON.parse(data) as FormattedTextRow[];
+      }
+    } catch (parseError) {
+      console.error('JSON parse error for data:', data.substring(0, 200) + '...');
+      throw new Error(`Failed to parse extracted text as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown JSON parsing error'}`);
+    }
+
+    if (text.length === 0) {
+      throw new Error('Extracted text is empty or not in expected format');
+    }
+    // Convert to SimpleFormattedTextRow format
+    const simpleFormattedRows: SimpleFormattedTextRow[] = text.map(row => ({
+      text: row.text || '',
+      x: row.x || 0,
+      y: row.y || 0,
+      items: row.items || []
+    }));
+
+    // Convert formatted text to matrix-like structure
+    textMatrix = convertFormattedTextToMatrix(simpleFormattedRows);
+    pagesProcessed = text.length || 1;
+
+    // Create Excel workbook from text matrix
+    const workbook = createExcelFromMatrix(textMatrix);
+
+    // Generate Excel buffer
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'buffer',
+      cellStyles: true,
+      sheetStubs: false
+    });
+    
+    return {
+      excelBuffer,
+      headers: pagesProcessed > 0 && textMatrix.rows.length > 0 ? textMatrix.rows[0] : []
+    };
+
+    
+    
+  } catch (error) {
+    console.error('Transaction extraction error:', error);
+    
+    // Provide more specific error messages based on the error type
+    if (error instanceof Error) {
+      if (error.message.includes('JSON')) {
+        throw new Error(`Failed to extract transactions from PDF: ${error.message}. The PDF content may not be in the expected format.`);
+      } else if (error.message.includes('pdf-parse')) {
+        throw new Error(`Failed to extract transactions from PDF: PDF parsing library error - ${error.message}`);
+      } else if (error.message.includes('Buffer')) {
+        throw new Error(`Failed to extract transactions from PDF: Invalid file format - ${error.message}`);
+      } else {
+        throw new Error(`Failed to extract transactions from PDF: ${error.message}`);
       }
     }
     
-    if (transactions.length === 0) {
-      throw new Error("No transaction-like lines found in the PDF.");
-    }
-    
-    return {
-      transactions,
-      headers: transactions.length > 0 ? Object.keys(transactions[0]) : []
-    };
-    
-  } catch (error) {
-    throw new Error(`Failed to extract transactions from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Failed to extract transactions from PDF: ${String(error)}`);
   }
 }
 

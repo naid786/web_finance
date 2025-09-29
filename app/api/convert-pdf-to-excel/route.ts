@@ -19,16 +19,17 @@ export async function POST(req: NextRequest) {
     const extractedData = await extractTransactionsFromPdfText(pdfBuffer);
     
     // Convert transactions to Excel format
-    const excelBuffer = await convertTransactionsToExcel(extractedData.transactions);
+    // const excelBuffer = await convertTransactionsToExcel(extractedData);
 
     // Return the Excel file as a response
-    return new NextResponse(new Uint8Array(excelBuffer), {
+    return new NextResponse(new Uint8Array(extractedData.excelBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="transactions.xlsx"',
       },
     });
+    
   } catch (err) {
     console.error('PDF to Excel conversion error:', err);
     return NextResponse.json({ 

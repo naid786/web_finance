@@ -1,6 +1,6 @@
 "use server";
 import { NextRequest, NextResponse } from 'next/server';
-import { extractTransactionsFromPdfText, convertTransactionsToExcel } from '@/lib/transactionUtils';
+import { extractTransactionsFromPdfText } from '@/lib/transactionUtils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,9 +17,6 @@ export async function POST(req: NextRequest) {
 
     // Extract transactions from PDF
     const extractedData = await extractTransactionsFromPdfText(pdfBuffer);
-    
-    // Convert transactions to Excel format
-    // const excelBuffer = await convertTransactionsToExcel(extractedData);
 
     // Return the Excel file as a response
     return new NextResponse(new Uint8Array(extractedData.excelBuffer), {

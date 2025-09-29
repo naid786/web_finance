@@ -22,51 +22,54 @@ A modern, responsive web application that seamlessly converts PDF files to Excel
 ## 🛠️ Tech Stack
 
 ### Core Framework
+
 - **[Next.js 15](https://nextjs.org/)** - React framework with App Router and Turbopack
 - **[TypeScript 5](https://www.typescriptlang.org/)** - Static type checking
 - **[React 19.1.0](https://reactjs.org/)** - Modern React with latest features
 
+### PDF Processing & Excel Generation
+
+- **[pdf-parse](https://github.com/modesty/pdf-parse)** - PDF text extraction
+- **[xlsx](https://github.com/SheetJS/sheetjs)** - Excel file generation
+
+### Form Management
+
+- **[react-hook-form](https://react-hook-form.com/)** - Performant forms
+- **[zod](https://zod.dev/)** - Schema validation
+
 ### Styling & UI
+
 - **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com/)** - High-quality component library
 - **[Radix UI](https://www.radix-ui.com/)** - Unstyled, accessible UI primitives
 - **[next-themes](https://github.com/pacocoursey/next-themes)** - Theme management
 
-### File Processing
-- **[pdf-parse](https://github.com/modesty/pdf-parse)** - PDF text extraction
-- **[xlsx](https://github.com/SheetJS/sheetjs)** - Excel file generation
-
-### Form Management
-- **[react-hook-form](https://react-hook-form.com/)** - Performant forms
-- **[zod](https://github.com/colinhacks/zod)** - Schema validation
-
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
 
 - **Node.js 18+** - [Download here](https://nodejs.org/)
-- **npm** or **yarn** package manager
+- **npm**, **yarn**, or **pnpm** package manager
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
-   git clone https://github.com/yourusername/pdf-to-excel-converter.git
-   cd pdf-to-excel-converter
+   git clone https://github.com/naid786/web_finance.git
+   cd web_finance
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
-3. **Start development server**
+3. **Start the development server**
+
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
 4. **Open your browser**
@@ -75,21 +78,48 @@ A modern, responsive web application that seamlessly converts PDF files to Excel
 
 ## 📁 Project Structure
 
-```
-pdf-to-excel-converter/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   │   └── convert-pdf-to-excel/
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Home page
-│   └── globals.css        # Global styles
-├── components/            # React components
-│   └── ui/               # shadcn/ui components
-├── lib/                  # Utility functions
-│   └── utils.ts          # Helper utilities
-├── types/                # TypeScript declarations
-├── public/               # Static assets
-└── next.config.ts        # Next.js configuration
+```text
+web_finance/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API routes
+│   │   ├── convert-pdf-to-excel/ # PDF to Excel conversion API
+│   │   └── convert-pdf-to-text/  # PDF to text extraction API
+│   ├── text-converter/           # Text extraction demo page
+│   ├── text-converter-demo/      # Text converter demo
+│   ├── favicon.ico
+│   ├── globals.css               # Global styles
+│   ├── layout.tsx                # Root layout component
+│   └── page.tsx                  # Home page component
+├── components/
+│   ├── ui/                       # Reusable UI components (shadcn/ui)
+│   │   ├── alert.tsx
+│   │   ├── badge.tsx
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── dropdown-menu.tsx
+│   │   ├── form.tsx
+│   │   ├── input.tsx
+│   │   ├── label.tsx
+│   │   ├── progress.tsx
+│   │   ├── separator.tsx
+│   │   ├── skeleton.tsx
+│   │   ├── sonner.tsx
+│   │   └── switch.tsx
+│   ├── theme-provider.tsx        # Theme context provider
+│   └── theme-toggle.tsx          # Dark/light mode toggle
+├── lib/
+│   ├── pdfText.ts               # PDF text extraction utilities
+│   ├── transactionUtils.ts     # Transaction parsing and Excel generation
+│   └── utils.ts                 # General utility functions
+├── types/
+│   └── pdf-parse.d.ts           # Type definitions for pdf-parse
+├── components.json               # shadcn/ui configuration
+├── eslint.config.mjs            # ESLint configuration
+├── next.config.ts               # Next.js configuration
+├── package.json                 # Dependencies and scripts
+├── postcss.config.mjs           # PostCSS configuration
+├── tsconfig.json               # TypeScript configuration
+└── vercel.json                 # Vercel deployment configuration
 ```
 
 ## 🔧 Configuration
@@ -98,7 +128,7 @@ pdf-to-excel-converter/
 
 Create a `.env.local` file in the root directory:
 
-```bash
+```env
 # Optional: Add any API keys or configuration here
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
@@ -120,51 +150,84 @@ The project uses optimized Next.js settings in `next.config.ts`:
 | `npm run build` | Create production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint for code quality |
-| `npm run type-check` | Run TypeScript compiler check |
+
+## 🔧 API Documentation
+
+### Convert PDF to Excel
+
+**Endpoint:** `POST /api/convert-pdf-to-excel`
+
+**Request:**
+
+- Method: POST
+- Content-Type: multipart/form-data
+- Body: FormData with 'pdf' file
+
+**Response:**
+
+- Success: Excel file download
+- Error: JSON with error message
+
+**Example:**
+
+```javascript
+const formData = new FormData();
+formData.append('pdf', pdfFile);
+
+const response = await fetch('/api/convert-pdf-to-excel', {
+  method: 'POST',
+  body: formData,
+});
+
+if (response.ok) {
+  const blob = await response.blob();
+  // Handle file download
+}
+```
+
+### Convert PDF to Text
+
+**Endpoint:** `POST /api/convert-pdf-to-text`
+
+**Request:**
+
+- Method: POST
+- Content-Type: multipart/form-data
+- Body: FormData with 'pdf' file
+
+**Response:**
+
+- Success: JSON with extracted text
+- Error: JSON with error message
 
 ## 🚀 Deployment
 
-### Deploy to Vercel (Recommended)
+### Vercel (Recommended)
 
-1. **Install Vercel CLI**
+1. **Push to GitHub**
+
    ```bash
-   npm i -g vercel
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
    ```
 
-2. **Deploy**
+2. **Deploy with Vercel**
+
    ```bash
+   npm i -g vercel
    vercel
    ```
 
-3. **Follow the prompts** to link your project and deploy
+3. **Follow the prompts** and your app will be deployed!
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/pdf-to-excel-converter)
+### Other Platforms
 
-### Deploy to Netlify
+The application can be deployed to any platform that supports Next.js:
 
-1. **Build the project**
-   ```bash
-   npm run build
-   ```
-
-2. **Deploy to Netlify**
-   ```bash
-   npx netlify-cli deploy --prod --dir=.next
-   ```
-
-### Self-Hosted Deployment
-
-1. **Build for production**
-   ```bash
-   npm run build
-   ```
-
-2. **Start the server**
-   ```bash
-   npm start
-   ```
-
-The application will be available on port 3000 by default.
+- **Netlify**: Use the `npm run build` command
+- **Railway**: Connect your GitHub repository
+- **DigitalOcean App Platform**: Use the app spec configuration
 
 ## 🤝 Contributing
 
@@ -172,17 +235,23 @@ We welcome contributions! Please follow these steps:
 
 1. **Fork the repository**
 2. **Create a feature branch**
+
    ```bash
    git checkout -b feature/amazing-feature
    ```
+
 3. **Commit your changes**
+
    ```bash
    git commit -m 'feat: add amazing feature'
    ```
+
 4. **Push to the branch**
+
    ```bash
    git push origin feature/amazing-feature
    ```
+
 5. **Open a Pull Request**
 
 ### Commit Convention
@@ -210,11 +279,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-<div align="center">
-  <p>Built with ❤️ and ☕</p>
-  <p>
-    <a href="https://github.com/yourusername/pdf-to-excel-converter/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/yourusername/pdf-to-excel-converter/issues">Request Feature</a>
-  </p>
-</div>
+Built with ❤️ and ☕
+
+[Report Bug](https://github.com/naid786/web_finance/issues) · [Request Feature](https://github.com/naid786/web_finance/issues)

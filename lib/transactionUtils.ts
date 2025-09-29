@@ -185,7 +185,6 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
     
     // Handle concatenated JSON arrays from multiple pages
     let text: FormattedTextRow[] = [];
-    let textMatrix: MatrixResult ;
     let pagesProcessed = 0;
 
     try {
@@ -233,7 +232,7 @@ export async function extractTransactionsFromPdfText(pdfFile: Buffer): Promise<E
     }));
 
     // Convert formatted text to matrix-like structure
-    textMatrix = convertFormattedTextToMatrix(simpleFormattedRows);
+    const textMatrix = convertFormattedTextToMatrix(simpleFormattedRows);
     pagesProcessed = text.length || 1;
 
     // Create Excel workbook from text matrix

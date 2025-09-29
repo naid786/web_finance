@@ -30,7 +30,7 @@ declare module 'pdf-parse' {
     version?: string;
     max?: number;
     [key: string]: unknown;
-    pagerender?: (pageData: any) => Promise<string> | string | null;
+    pagerender?: (pageData: unknown) => Promise<string> | string | null;
   }
 
   function pdfParse(dataBuffer: Buffer, options?: PDFParseOptions): Promise<PDFData>;

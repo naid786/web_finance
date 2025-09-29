@@ -120,7 +120,7 @@ export default function TextConverter() {
     try {
       await navigator.clipboard.writeText(extractedText);
       toast.success("Text copied to clipboard!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to copy text to clipboard");
     }
   };

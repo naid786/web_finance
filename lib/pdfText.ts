@@ -13,17 +13,22 @@ interface TextItem {
     str: string;
     transform?: number[];
 }
-function groupItemsByRows(items: any[], baseTolerance: number = 2): any[][] {
-    const rows: any[][] = [];
-    let currentRow: any[] = [];
+interface TextTransform {
+    transform?: number[];
+    str: string;
+}
+
+function groupItemsByRows(items: TextTransform[], baseTolerance: number = 2): TextTransform[][] {
+    const rows: TextTransform[][] = [];
+    let currentRow: TextTransform[] = [];
 
     items.forEach(item => {
         if (currentRow.length === 0) {
             currentRow.push(item);
         } else {
             const lastItem = currentRow[currentRow.length - 1];
-            const lastY = lastItem.transform[5];
-            const currentY = item.transform[5];
+            const lastY = lastItem.transform?.[5] ?? 0;
+            const currentY = item.transform?.[5] ?? 0;
 
             // Check if the current item is on the same line as the last item
             if (Math.abs(currentY - lastY) < baseTolerance) {
@@ -190,10 +195,10 @@ function formatTextRows(rows: TextItem[][]): FormattedTextRow[] {
 }
 
 
-export function render_page(pageData: any) {
+export function render_page(pageData: unknown) {
 
     //check documents https://mozilla.github.io/pdf.js/
-    let render_options = {
+    const render_options = {
         //replaces all occurrences of whitespace with standard spaces (0x20). The default value is `false`.
         normalizeWhitespace: false,
         //do not attempt to combine same line TextItem's. The default value is `false`.
